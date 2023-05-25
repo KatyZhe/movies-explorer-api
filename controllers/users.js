@@ -15,17 +15,15 @@ const signin = async (req, res, next) => {
       NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
       { expiresIn: '7d' }
     );
-    return user
-      ? res
-          .cookie('jwt', token, {
-            httpOnly: true,
-            maxAge: 6.048e8,
-            sameSite: 'none',
-            secure: true,
-          })
-          .status(200)
-          .send({ message: 'Пользователь авторизован' })
-      : next(new Error);
+    return res
+      .cookie('jwt', token, {
+        httpOnly: true,
+        maxAge: 6.048e8,
+        sameSite: 'none',
+        secure: true,
+      })
+      .status(200)
+      .send({ message: 'Пользователь авторизован' });
   } catch (error) {
     return next(error);
   }
@@ -54,13 +52,11 @@ const createUser = async (req, res, next) => {
       email,
       password: hash,
     });
-    return user
-      ? res.status(200).send({
+    return res.status(200).send({
           name: user.name,
           _id: user._id,
           email: user.email,
         })
-      : next(new NotFoundErr('Невозможно создать пользователя'));
   } catch (error) {
     if (error.name === 'ValidationError') {
       return next(new BadRequestErr('Данные введены неверно'));
@@ -92,15 +88,15 @@ const updateUser = async (req, res, next) => {
       {
         new: true,
         runValidators: true,
-      },
+      }
     );
     return res.status(200).send({
       name: user.name,
       email: user.email,
     });
   } catch (error) {
-    if (error.name === 'ValidationError') {
-      return next(new BadRequestErr('Невозможно обновить данные пользователя'));
+    if (error.name === 'CastError' || error.name === 'ValidationError') {
+      return next(new BadRequestErr('Введите корректные данные'));
     }
     return next(error);
   }

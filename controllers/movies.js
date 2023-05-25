@@ -10,9 +10,7 @@ const getMovies = async (req, res, next) => {
     const movies = await Movie.find({ owner });
     return res.status(200).send(movies);
   } catch (error) {
-    return error.name === 'ValidationError'
-      ? next(new BadRequestErr('Невозможно отобразить список фильмов'))
-      : next(error);
+    return next(error);
   }
 };
 
@@ -51,8 +49,8 @@ const createMovie = async (req, res, next) => {
     if (error.code === 11000) {
       return next(new ConflictErr('Такой фильм уже существует'));
     }
-    return error.name === 'CastError' || error.name === 'ValidationError'
-      ? next(new BadRequestErr('Невозможно создать фильм'))
+    return error.name === 'ValidationError'
+      ? next(new BadRequestErr('Невозможно создать фильм - данные введены не верно'))
       : next(error);
   }
 };
@@ -60,17 +58,17 @@ const createMovie = async (req, res, next) => {
 const deleteMovie = async (req, res, next) => {
   try {
     const owner = req.user._id;
-    const { id } = req.params;
-    const movie = await Movie.findById(id);
+    const { movieId } = req.params;
+    const movie = await Movie.findById(movieId);
     if (!movie) {
       return next(new NotFoundErr('Фильм не найден'));
     }
     const isOwner = owner.toString() === movie.owner.toString();
     if (isOwner) {
-      const deletedMovie = await Movie.findByIdAndRemove(id);
+      const deletedMovie = await Movie.findByIdAndRemove(movieId);
       return res.status(200).send(deletedMovie);
     }
-    return next(new ForbiddenErr('Невозможно удалить фильм'));
+    return next(new ForbiddenErr('Невозможно удалить фильм другого пользователя'));
   } catch (error) {
     return error.name === 'CastError'
       ? next(new BadRequestErr('Вы не можете удалить этот фильм'))

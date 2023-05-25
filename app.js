@@ -1,21 +1,25 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const { errors } = require('celebrate');
+const helmet = require('helmet');
 
 const router = require("./routes/index");
-const NotFoundErr = require('./errors/NotFoundErr');
 const errorHandler = require('./middlewares/errorHandler');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const cors = require('./middlewares/cors')
 
 const { PORT = 3000 } = process.env;
 const app = express();
+const MONGO_URL_DEV = 'mongodb://127.0.0.1:27017/moviesdb';
+const { NODE_ENV, MONGO_URL } = process.env;
 
-mongoose.connect('mongodb://localhost:27017/bitfilmsdb', {
+mongoose.connect(NODE_ENV === 'production' ? MONGO_URL : MONGO_URL_DEV, {
   family: 4,
 });
 
+app.use(helmet());
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -29,10 +33,6 @@ app.get('/crash-test', () => {
 }); 
 
 app.use(router);
-
-app.use((res, req, next) => {
-  next(new NotFoundErr('Страница не найдена'));
-});
 
 app.use(errorLogger);
 app.use(errors());
