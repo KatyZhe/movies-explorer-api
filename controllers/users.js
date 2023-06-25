@@ -1,45 +1,39 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/user');
-const { JWT_SECRET, NODE_ENV } = require('../config');
-const BadRequestErr = require('../errors/BadRequestErr');
-const ConflictErr = require('../errors/ConflictErr');
-const NotFoundErr = require('../errors/NotFoundErr');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("../models/user");
+const { JWT_SECRET, NODE_ENV } = require("../config");
+const BadRequestErr = require("../errors/BadRequestErr");
+const ConflictErr = require("../errors/ConflictErr");
+const NotFoundErr = require("../errors/NotFoundErr");
+const UnauthorizedErr = require("../errors/UnauthorizedErr");
 
-const signin = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findUserByCredentials(email, password);
-    const token = jwt.sign(
-      { _id: user._id },
-      NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
-      { expiresIn: '7d' }
-    );
-    return res
-      .cookie('jwt', token, {
-        httpOnly: true,
-        maxAge: 6.048e8,
-        sameSite: 'none',
-        secure: true,
-      })
-      .status(200)
-      .send({ message: 'Пользователь авторизован' });
-  } catch (error) {
-    return next(error);
-  }
-};
+const signin = (req, res, next) => {
+  const { email, password } = req.body;
 
-const signout = async (req, res, next) => {
-  try {
-    res.clearCookie('jwt', {
-      httpOnly: true,
-      sameSite: 'none',
-      secure: true,
+  User.findOne({ email })
+    .select("+password")
+    .then((user) => {
+      if (!user) {
+        throw new UnauthorizedErr("Неверные почта или пароль");
+      }
+      return bcrypt.compare(password, user.password).then((matched) => {
+        if (!matched) {
+          throw new UnauthorizedErr("Неверные почта или пароль");
+        }
+
+        const token = jwt.sign(
+          { _id: user._id },
+          NODE_ENV === "production" ? JWT_SECRET : "diploma-secret-key",
+          {
+            expiresIn: "7d",
+          }
+        );
+        res.status(200).send({ token });
+      });
+    })
+    .catch((err) => {
+      next(err);
     });
-    return res.status(200).send({ message: 'Пользователь вышел из аккаунта' });
-  } catch (error) {
-    return next(error);
-  }
 };
 
 const createUser = async (req, res, next) => {
@@ -53,16 +47,16 @@ const createUser = async (req, res, next) => {
       password: hash,
     });
     return res.status(200).send({
-          name: user.name,
-          _id: user._id,
-          email: user.email,
-        })
+      name: user.name,
+      _id: user._id,
+      email: user.email,
+    });
   } catch (error) {
-    if (error.name === 'ValidationError') {
-      return next(new BadRequestErr('Данные введены неверно'));
+    if (error.name === "ValidationError") {
+      return next(new BadRequestErr("Данные введены неверно"));
     }
     if (error.code === 11000) {
-      return next(new ConflictErr('Пользователь уже зарегестрирован'));
+      return next(new ConflictErr("Пользователь уже зарегестрирован"));
     }
     return next(error);
   }
@@ -73,7 +67,7 @@ const getUserInfo = async (req, res, next) => {
     const userInfo = await User.findById(req.user._id);
     return userInfo
       ? res.status(200).send(userInfo)
-      : next(new NotFoundErr('Пользователь не найден'));
+      : next(new NotFoundErr("Пользователь не найден"));
   } catch (error) {
     return next(error);
   }
@@ -95,8 +89,8 @@ const updateUser = async (req, res, next) => {
       email: user.email,
     });
   } catch (error) {
-    if (error.name === 'CastError' || error.name === 'ValidationError') {
-      return next(new BadRequestErr('Введите корректные данные'));
+    if (error.name === "CastError" || error.name === "ValidationError") {
+      return next(new BadRequestErr("Введите корректные данные"));
     }
     return next(error);
   }
@@ -107,5 +101,4 @@ module.exports = {
   getUserInfo,
   updateUser,
   signin,
-  signout,
 };
