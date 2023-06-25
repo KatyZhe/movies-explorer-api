@@ -9,7 +9,7 @@ const errorHandler = require('./middlewares/errorHandler');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const cors = require('./middlewares/cors')
 
-const { PORT = 3001 } = process.env;
+const { PORT = 3000 } = process.env;
 const app = express();
 const MONGO_URL_DEV = 'mongodb://127.0.0.1:27017/bitfilmsdb';
 const { NODE_ENV, MONGO_URL } = process.env;
