@@ -22,7 +22,7 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
-app.use(cors);
+app.use(cors());
 
 app.get('/crash-test', () => {
   setTimeout(() => {
