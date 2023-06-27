@@ -19,10 +19,10 @@ mongoose.connect(NODE_ENV === 'production' ? MONGO_URL : MONGO_URL_DEV, {
 });
 
 app.use(helmet());
+app.use(cors({origin: 'https://katyzhe.nomoredomains.rocks'}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
-app.use(cors());
 
 app.get('/crash-test', () => {
   setTimeout(() => {
