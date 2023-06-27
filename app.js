@@ -19,7 +19,7 @@ mongoose.connect(NODE_ENV === 'production' ? MONGO_URL : MONGO_URL_DEV, {
 });
 
 app.use(helmet());
-app.use(cors({origin: 'http://katyzhe.nomoredomains.rocks'}));
+app.use(cors({credentials: true, origin: 'http://katyzhe.nomoredomains.rocks'}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
