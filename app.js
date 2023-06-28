@@ -25,8 +25,8 @@ app.use(
     origin: [
       "https://katyzhe.nomoredomains.rocks",
       "http://katyzhe.nomoredomains.rocks",
-      "http://localhost:3000/",
-      "https://localhost:3000/",
+      "http://localhost:3000",
+      "https://localhost:3000",
     ],
     default: "https://katyzhe.nomoredomains.rocks",
   })
